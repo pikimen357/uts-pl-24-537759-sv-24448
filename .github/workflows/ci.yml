@@ -64,3 +64,58 @@ jobs:
         run: npm run build
         env:
           VITE_API_URL: http://localhost:8000/api
+
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Pastikan secrets tersedia
+        env:
+          APP_KEY: ${{ secrets.APP_KEY }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          test -n "$APP_KEY" || { echo "Secret APP_KEY belum diatur"; exit 1; }
+          test -n "$DB_PASSWORD" || { echo "Secret DB_PASSWORD belum diatur"; exit 1; }
+          echo "Secrets tersedia"
+
+      - name: Nama image (harus huruf kecil)
+        run: echo "IMAGE_PREFIX=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Cek nama image
+        run: echo "Prefix = $IMAGE_PREFIX"
+
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login ke ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build dan push image backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}-backend:${{ github.sha }}
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+      - name: Build dan push image frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          build-args: |
+            VITE_API_URL=/api
+          tags: ${{ env.IMAGE_PREFIX }}-frontend:${{ github.sha }}
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
