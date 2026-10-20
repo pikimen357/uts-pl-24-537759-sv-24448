@@ -9,7 +9,7 @@ RUN npm ci
 COPY . .
 
 # Alamat API ditanam saat build (bukan rahasia). Bisa diganti lewat --build-arg.
-ARG VITE_API_URL=http://localhost:8001/api
+ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 
 RUN npm run build
