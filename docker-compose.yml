@@ -15,6 +15,11 @@ services:
       timeout: 5s
       retries: 20
       start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   backend:
     build: ./backend
@@ -32,12 +37,31 @@ services:
       DB_DATABASE: ${DB_DATABASE}
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
+      # Log ke stdout (JSON) -> dibaca lewat `docker compose logs`
+      LOG_CHANNEL: stdout
+      LOG_LEVEL: info
+      # Cache & session tidak bergantung pada DB, supaya /health bisa
+      # membedakan "database mati" dari "cache mati".
+      CACHE_STORE: file
+      SESSION_DRIVER: file
     command: >
       sh -c "php artisan migrate --force &&
              php artisan db:seed --force &&
              php artisan serve --host=0.0.0.0 --port=8000 --no-reload"
     ports:
       - "8001:8000"
+    healthcheck:
+      # wget keluar dengan kode != 0 bila /health membalas 503
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   frontend:
     build:
@@ -46,9 +70,15 @@ services:
         VITE_API_URL: /api
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "8080:80"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   db_data:
