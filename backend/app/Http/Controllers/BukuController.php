@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Buku;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class BukuController extends Controller
 {
@@ -26,6 +27,13 @@ class BukuController extends Controller
     {
         $buku = Buku::create($request->validate($this->rules()));
 
+        Log::info('Buku baru disimpan', [
+            'actor' => 'user:'.$request->user()->id,
+            'action' => 'buku.create',
+            'reason' => 'permintaan_pengguna',
+            'buku_id' => $buku->id,
+        ]);
+
         return response()->json(['message' => 'Buku dibuat', 'data' => $buku], 201);
     }
 
@@ -38,12 +46,26 @@ class BukuController extends Controller
     {
         $buku->update($request->validate($this->rules()));
 
+        Log::info('Data buku diubah', [
+            'actor' => 'user:'.$request->user()->id,
+            'action' => 'buku.update',
+            'reason' => 'permintaan_pengguna',
+            'buku_id' => $buku->id,
+        ]);
+
         return response()->json(['message' => 'Buku diubah', 'data' => $buku]);
     }
 
-    public function destroy(Buku $buku)
+    public function destroy(Request $request, Buku $buku)
     {
         $buku->delete();
+
+        Log::info('Buku dihapus', [
+            'actor' => 'user:'.$request->user()->id,
+            'action' => 'buku.delete',
+            'reason' => 'permintaan_pengguna',
+            'buku_id' => $buku->id,
+        ]);
 
         return response()->json(['message' => 'Buku dihapus']);
     }
