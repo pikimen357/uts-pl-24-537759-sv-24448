@@ -5,12 +5,14 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BukuController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\MetricsController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
 Route::get('/health', HealthController::class);
+Route::get('/metrics', MetricsController::class);
 
 Route::post('/login', [AuthController::class, 'login']);
 

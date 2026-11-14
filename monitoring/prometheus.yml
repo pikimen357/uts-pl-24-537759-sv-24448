@@ -1,0 +1,24 @@
+global:
+  scrape_interval: 15s       # seberapa sering target ditarik
+  evaluation_interval: 15s   # seberapa sering aturan alarm dicek
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'container'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  - job_name: 'server'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  - job_name: 'aplikasi'
+    metrics_path: /api/metrics   # route metrik Laravel berada di bawah prefix /api
+    static_configs:
+      - targets: ['backend:8000']

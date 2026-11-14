@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CatatMetrik;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,7 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Hitung setiap request untuk metrik Prometheus (/api/metrics).
+        $middleware->append(CatatMetrik::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Validasi gagal: catat NAMA field yang salah saja, tidak pernah nilainya.

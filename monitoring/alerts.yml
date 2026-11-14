@@ -1,0 +1,11 @@
+groups:
+  - name: aplikasi
+    rules:
+      - alert: AplikasiMati
+        expr: up{job="aplikasi"} == 0
+        for: 1m          # harus benar-benar mati selama 1 menit, bukan sekadar kedip
+        labels:
+          severity: kritis
+        annotations:
+          summary: "Backend Manajemen Buku tidak bisa ditarik oleh Prometheus"
+          action: "Jalankan `docker compose ps`, lalu `docker compose logs --tail=50 backend`. Jika container berhenti, nyalakan dengan `docker compose start backend`."
